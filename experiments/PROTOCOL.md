@@ -63,3 +63,34 @@ Resmî sonuç: kabul edilen yapılandırma **E0**. E3/E4 her iki dönemde de tut
 * Değerlendirme zamanı: en az **180 gün** *ve* en az **15 tamamlanmış işlem*, hangisi geç gelirse.
 * Ölçüt: aynı dönemde al-tut'a göre Sharpe ve maksimum drawdown. Getiri tek başına ölçüt değildir.
 * Sonuç olumsuz olsa da yayınlanır.
+
+---
+
+## Ek 2 (2026-10-22) — E5 ve E6, sonuçlara bakılmadan YAZILDI
+
+Açık kaynak projelerin (Freqtrade, Hummingbot, TradingAgents) belgeleri incelendikten sonra, hiçbir yeni koşu yapılmadan kaydedildi.
+
+### E5: sıklık hipotezi
+*Soru:* aynı rejim filtreli Donchian yapısı, 4 saatlik mumlarda ve kısa pencerelerle (5/10/20 gün) günlük E3'ten daha iyi mi? Beklenti: ayda birkaç işlem.
+* Yapılandırma: `experiments/e5_fast4h.toml`. E3'ten tek fark mum süresi ve pencere uzunlukları; takvim süreleri sabit (1 gün = 6 mum).
+* Dönemler: yalnızca `dev` ve `validation` (test bölgesine dokunulmaz).
+* Kabul: E3'e göre **hem dev hem validation Sharpe'ında daha yüksek**. İşlem sayısı ve toplam komisyon da raporlanır;
+  Sharpe yüksek ama komisyon yüksekse yorum buna göre yapılır, kural değişmez.
+
+### E6: biriktirme (DCA) ve rejim eğimi
+Kullanıcı satmak yerine düzenli alım yapıyor; bu yüzden asıl kıyas al-tut değil DCA'dir.
+*Sorular:* BTC 200 günlük ortalamanın altındayken alım miktarını değiştirmek DCA'yı iyileştirir mi?
+* Kurallar (sabit): her pazartesi 00:00 UTC'de 100 USDT, BTC/ETH/SOL arasında eşit bölünür; komisyon %0,10, kayma %0,05.
+* Varyantlar: **D0** düz DCA. **D1** BTC < 200g ortalama iken alım yok (harcanmayan tutar yatırılmış sayılmaz).
+  **D2** BTC < 200g ortalama iken alım iki katı.
+* Metrikler: toplam yatırılan, bitiş değeri, yatırılan tutara göre getiri, parayla ağırlıklı yıllık getiri (IRR), ortalama maliyet, portföy değerinin maksimum düşüşü.
+* Dönemler: `dev` ve `validation`. Kabul (D1 veya D2, D0'a göre): IRR **ve** yatırılan tutara göre getiri her iki dönemde de daha yüksek, ve maksimum düşüş D0'dan 5 puandan fazla kötü değil.
+* Not: DCA'nın bu kıyasları için literatürde hakemli kanıt bulunamadı; endüstri kaynakları (Bull Bitcoin raporu vb.) doğrulanmamıştır.
+
+### Denetim (yöntem, hipotez değil)
+`audit` komutu Freqtrade'in `lookahead-analysis` (kesilmiş veriyle karşılaştırma) ve `recursive-analysis` (geçmiş uzunluğu bağımlılığı)
+fikirlerini gerçek veride uygular. Bir yapılandırmanın backtest sonuçları rapor edilmeden önce denetimi geçmelidir.
+
+### Bilinen kusur (belgelenir, düzeltilmez)
+`risk.vol_window` alanı hiçbir yerde kullanılmıyor; yıllık volatilite `signals.volume_window` ile hesaplanıyor. E2–E4'te ikisi de 20 olduğu için
+sonuç etkilenmedi. E5'te `signals.volume_window = 120` (20 gün) kullanılır. Düzeltme ayrı bir değişiklik olarak yapılacak; geçmiş koşular değişmez.

@@ -1,0 +1,32 @@
+# E5: E3 ile aynı yapı (Donchian topluluğu + BTC 200g rejim filtresi + hedef volatilite, stop yok), ancak 4 saatlik
+# mumlarda ve KISA bakış pencereleriyle (5/10/20 gün) → "ayda birkaç işlem" hipotezi.
+# Takvim süreleri sabit tutuldu: 1 gün = 6 mum. Parametre ayarı yapılmadı.
+[market]
+mode = "spot"
+instruments = ["BTC-USDT", "ETH-USDT", "SOL-USDT"]
+bar = "4H"
+initial_equity = 10000.0
+
+[signals]
+donchian_lookbacks = [30, 60, 120]   # 5, 10, 20 gün
+volume_window = 120                  # 20 gün: yıllık volatilite bu pencereyle hesaplanır (signals.volume_window)
+
+[weights]
+trend = 0.0
+macd = 0.0
+rsi = 0.0
+volume = 0.0
+funding = 0.0
+donchian = 1.0
+
+[risk]
+max_drawdown = 0.99
+max_atr_pct = 0.20
+use_stop = false
+sizing = "vol_target"
+target_vol = 0.20
+
+[regime]
+enabled = true
+reference = "BTC-USDT"
+sma_bars = 1200                      # 200 gün
