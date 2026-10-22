@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-10-22 09:08 UTC",
+  "rows": [
+    {
+      "variant": "z0=2.0 h=1d side=high",
+      "z0": 2.0,
+      "horizon": "1d",
+      "side": "high",
+      "n_dev": 29,
+      "coins_dev": {
+        "BTC": 19,
+        "ETH": 18,
+        "SOL": 19
+      },
+      "n_validation": 39,
+      "coins_validation": {
+        "BTC": 31,
+        "ETH": 28,
+        "SOL": 29
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.0 h=3d side=high",
+      "z0": 2.0,
+      "horizon": "3d",
+      "side": "high",
+      "n_dev": 15,
+      "coins_dev": {
+        "BTC": 9,
+        "ETH": 10,
+        "SOL": 11
+      },
+      "n_validation": 17,
+      "coins_validation": {
+        "BTC": 14,
+        "ETH": 14,
+        "SOL": 13
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.0 h=7d side=high",
+      "z0": 2.0,
+      "horizon": "7d",
+      "side": "high",
+      "n_dev": 11,
+      "coins_dev": {
+        "BTC": 6,
+        "ETH": 6,
+        "SOL": 7
+      },
+      "n_validation": 10,
+      "coins_validation": {
+        "BTC": 9,
+        "ETH": 9,
+        "SOL": 10
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.5 h=1d side=high",
+      "z0": 2.5,
+      "horizon": "1d",
+      "side": "high",
+      "n_dev": 26,
+      "coins_dev": {
+        "BTC": 19,
+        "ETH": 15,
+        "SOL": 12
+      },
+      "n_validation": 32,
+      "coins_validation": {
+        "BTC": 19,
+        "ETH": 20,
+        "SOL": 25
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.5 h=3d side=high",
+      "z0": 2.5,
+      "horizon": "3d",
+      "side": "high",
+      "n_dev": 13,
+      "coins_dev": {
+        "BTC": 9,
+        "ETH": 9,
+        "SOL": 8
+      },
+      "n_validation": 13,
+      "coins_validation": {
+        "BTC": 11,
+        "ETH": 12,
+        "SOL": 11
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.5 h=7d side=high",
+      "z0": 2.5,
+      "horizon": "7d",
+      "side": "high",
+      "n_dev": 9,
+      "coins_dev": {
+        "BTC": 6,
+        "ETH": 6,
+        "SOL": 4
+      },
+      "n_validation": 9,
+      "coins_validation": {
+        "BTC": 9,
+        "ETH": 8,
+        "SOL": 9
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.0 h=1d side=low",
+      "z0": 2.0,
+      "horizon": "1d",
+      "side": "low",
+      "n_dev": 113,
+      "coins_dev": {
+        "BTC": 57,
+        "ETH": 58,
+        "SOL": 55
+      },
+      "n_validation": 37,
+      "coins_validation": {
+        "BTC": 22,
+        "ETH": 15,
+        "SOL": 19
+      },
+      "verdict": "COUNT_OK"
+    },
+    {
+      "variant": "z0=2.0 h=3d side=low",
+      "z0": 2.0,
+      "horizon": "3d",
+      "side": "low",
+      "n_dev": 67,
+      "coins_dev": {
+        "BTC": 41,
+        "ETH": 35,
+        "SOL": 34
+      },
+      "n_validation": 17,
+      "coins_validation": {
+        "BTC": 11,
+        "ETH": 9,
+        "SOL": 11
+      },
+      "verdict": "COUNT_OK"
+    },
+    {
+      "variant": "z0=2.0 h=7d side=low",
+      "z0": 2.0,
+      "horizon": "7d",
+      "side": "low",
+      "n_dev": 41,
+      "coins_dev": {
+        "BTC": 29,
+        "ETH": 28,
+        "SOL": 22
+      },
+      "n_validation": 10,
+      "coins_validation": {
+        "BTC": 5,
+        "ETH": 6,
+        "SOL": 8
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.5 h=1d side=low",
+      "z0": 2.5,
+      "horizon": "1d",
+      "side": "low",
+      "n_dev": 72,
+      "coins_dev": {
+        "BTC": 25,
+        "ETH": 29,
+        "SOL": 39
+      },
+      "n_validation": 21,
+      "coins_validation": {
+        "BTC": 14,
+        "ETH": 7,
+        "SOL": 9
+      },
+      "verdict": "COUNT_OK"
+    },
+    {
+      "variant": "z0=2.5 h=3d side=low",
+      "z0": 2.5,
+      "horizon": "3d",
+      "side": "low",
+      "n_dev": 45,
+      "coins_dev": {
+        "BTC": 21,
+        "ETH": 20,
+        "SOL": 26
+      },
+      "n_validation": 12,
+      "coins_validation": {
+        "BTC": 9,
+        "ETH": 4,
+        "SOL": 6
+      },
+      "verdict": "INSUFFICIENT"
+    },
+    {
+      "variant": "z0=2.5 h=7d side=low",
+      "z0": 2.5,
+      "horizon": "7d",
+      "side": "low",
+      "n_dev": 33,
+      "coins_dev": {
+        "BTC": 19,
+        "ETH": 16,
+        "SOL": 18
+      },
+      "n_validation": 8,
+      "coins_validation": {
+        "BTC": 5,
+        "ETH": 3,
+        "SOL": 5
+      },
+      "verdict": "INSUFFICIENT"
+    }
+  ]
+}
