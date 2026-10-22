@@ -5,6 +5,7 @@
   paper     her mum kapanışında karar verir (--executor sim | demo)
   status    paper hesabın durumunu gösterir
   evaluate  önceden kaydedilmiş protokolle yapılandırmaları dönem dönem değerlendirir
+  dca       E6: düz DCA ve BTC 200g rejim eğimi (dönem dönem)
   audit     sinyaller geleceğe bakıyor mu / geçmiş uzunluğuna bağımlı mı (gerçek veride)
   compare   yıl yıl: kurallı strateji vs grid vs al-tut (önbellekteki veriyle)
 """
@@ -253,6 +254,39 @@ def cmd_audit(cfg, args, base: Path) -> int:
     return 0 if ok else 1
 
 
+def cmd_dca(cfg, args, base: Path) -> int:
+    """E6: düz DCA ve BTC 200g rejim eğimi (Protokol Ek 2). Dönemler protokolden, test bölgesi korumalı."""
+    from okx_karar.dca import VARIANTS, simulate_dca
+
+    protocol = tomllib.loads((base / "experiments" / "protocol.toml").read_text(encoding="utf-8"))
+    periods = [x.strip() for x in args.periods.split(",")]
+    test_start = pd.Timestamp(protocol["guard"]["test_start"], tz="UTC")
+    zone = {n: pd.Timestamp(protocol["periods"][n][1], tz="UTC") > test_start for n in periods}
+    if any(zone.values()) and not args.allow_test:
+        raise SystemExit("Test bölgesine düşen dönem(ler): " + ", ".join(n for n, z in zone.items() if z)
+                         + ". --allow-test gerekir (bkz. experiments/PROTOCOL.md).")
+    context = pd.Timedelta(days=protocol["context_days"])
+    print(f"{'dönem':<12}{'varyant':<9}{'yatırılan':>10}{'bitiş':>10}{'getiri':>9}{'IRR':>8}{'maxDD':>8}{'alım':>6}{'atlanan':>8}")
+    out_dir = base / "results" / "experiments"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name in periods:
+        start, end = (pd.Timestamp(x, tz="UTC") for x in protocol["periods"][name])
+        data = {i: load_candles(None, i, "1Dutc", start - context, end, base / "data", offline=True) for i in cfg.instruments}
+        for v in VARIANTS:
+            r = simulate_dca(data, v, cfg.costs, start, end)
+            print(f"{name:<12}{v:<9}{r.invested:>10.0f}{r.final_value:>10.0f}{100 * r.return_on_invested:>8.1f}%"
+                  f"{100 * r.irr:>7.1f}%{100 * r.max_drawdown:>7.1f}%{r.buys:>6}{r.skipped:>8}")
+            record = {"period": name, "variant": v, "invested": r.invested, "final_value": r.final_value,
+                      "return_on_invested": r.return_on_invested, "irr": r.irr, "max_drawdown": r.max_drawdown,
+                      "buys": r.buys, "skipped": r.skipped, "avg_cost": r.avg_cost,
+                      "evaluated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            (out_dir / f"dca_{v}_{name}.json").write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
+            if zone[name]:
+                with (base / "experiments" / "test_log.jsonl").open("a", encoding="utf-8") as fh:
+                    fh.write(json.dumps({"kind": "dca", **record}, default=str) + "\n")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="okx_karar", description="OKX kurallı karar sistemi")
     parser.add_argument("--config", default=None, help="yapılandırma dosyası (varsayılan: proje içindeki config.toml)")
@@ -281,6 +315,10 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("audit")
     p.add_argument("--lengths", default="150,300,600,1200", help="özyineleme testinde kullanılacak son-N bar değerleri")
 
+    p = sub.add_parser("dca")
+    p.add_argument("--periods", default="dev,validation", help="protocol.toml'daki dönem adları")
+    p.add_argument("--allow-test", action="store_true", help="test bölgesini aç (kayıt altına alınır)")
+
     p = sub.add_parser("status")
     p.add_argument("--executor", choices=("sim", "demo"), default="sim")
 
@@ -288,5 +326,5 @@ def main(argv: list[str] | None = None) -> int:
     base = Path(__file__).resolve().parent.parent
     cfg = load_config(args.config or base / "config.toml")
     handlers = {"fetch": cmd_fetch, "backtest": cmd_backtest, "paper": cmd_paper, "status": cmd_status,
-                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit}
+                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit, "dca": cmd_dca}
     return handlers[args.cmd](cfg, args, base)
