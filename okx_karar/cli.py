@@ -190,9 +190,11 @@ def cmd_evaluate(_cfg, args, base: Path) -> int:
     """Önceden kaydedilmiş protokolle birden çok yapılandırmayı dönem dönem değerlendirir."""
     protocol = tomllib.loads((base / "experiments" / "protocol.toml").read_text(encoding="utf-8"))
     periods = [x.strip() for x in args.periods.split(",")]
-    if "test" in periods and not args.allow_test:
-        raise SystemExit("test dönemi yalnızca son adımda, --allow-test ile ve bir kez çalıştırılmalı "
-                         "(bkz. experiments/PROTOCOL.md).")
+    test_start = pd.Timestamp(protocol["guard"]["test_start"], tz="UTC")
+    in_test_zone = {n: pd.Timestamp(protocol["periods"][n][1], tz="UTC") > test_start for n in periods}
+    if any(in_test_zone.values()) and not args.allow_test:
+        raise SystemExit("Test bölgesine düşen dönem(ler): " + ", ".join(n for n, z in in_test_zone.items() if z)
+                         + ". Yalnızca --allow-test ile ve protokole (experiments/PROTOCOL.md) uygun çalıştırılmalı.")
     context = pd.Timedelta(days=protocol["context_days"])
     print(f"{'yapılandırma':<20}{'dönem':<12}{'getiri':>9}{'Sharpe':>8}{'maxDD':>9}{'işlem':>7}{'maruz.':>8}"
           f"   al-tut: getiri / Sharpe / maxDD")
@@ -216,7 +218,7 @@ def cmd_evaluate(_cfg, args, base: Path) -> int:
                       "evaluated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "summary": summary}
             (out_dir / f"{label}_{name}.json").write_text(
                 json.dumps(record, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
-            if name == "test":
+            if in_test_zone[name]:
                 with (base / "experiments" / "test_log.jsonl").open("a", encoding="utf-8") as fh:
                     fh.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
     return 0

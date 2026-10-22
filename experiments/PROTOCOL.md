@@ -39,3 +39,27 @@ artık geliştirme verisi sayılır.
 * Üç coin bugünden bakınca seçildi (hepsi hayatta kaldı), al-tut'u biraz şişirir.
 * Tek piyasa döngüsü, az sayıda bağımsız gözlem: sonuçlar kesin değil, ipucudur.
 * Rejim filtresi ve onay yalnızca long girişe uygulanır (spot).
+
+---
+
+## Ek 1 (2026-10-22) — ilk sonuçlardan SONRA yazıldı
+
+Bu ek, dev ve validation sonuçları görüldükten sonra eklendi; aşağıdaki karar sonuçlara bakılarak verildi ve bu açıkça kayıt altındadır.
+
+**Ladder sonucu (özet).** Kabul kuralı uygulandığında hiçbir basamak E0'ı hem dev hem validation Sharpe'ında geçemedi.
+Resmî sonuç: kabul edilen yapılandırma **E0**. E3/E4 her iki dönemde de tutarlıydı (Sharpe ≈ 1,0) ama dev'de E0'ın gerisinde kaldı.
+
+**Karar (araştırmacı).** E3 ve E4, kabul kuralını geçmedikleri hâlde *ileriye dönük izleme adayı* olarak sürdürülür. Bu, kuralı geçtikleri anlamına gelmez.
+
+**Test bölgesi (2025-01-01 → 2026-10-22).**
+* E0 için resmî, tek seferlik test koşulur (protokolün aslı).
+* E3/E4 için bu bölgeden alınan her sonuç **keşif amaçlıdır**, temiz doğrulama değildir: seçim, sonuçlar görüldükten sonra yapıldı.
+* Test bölgesine düşen her koşu (`y2025`, `y2026` dahil) `--allow-test` ister ve `test_log.jsonl`'a yazılır.
+
+**Yıl dilimleri.** `y2022 … y2026`: boğa/ayı rejiminde davranışı görmek içindir. Kabul kararı vermez.
+
+**Gerçek dışarıdan doğrulama.** 2026-10-22'den sonraki veri. E3 ve E4 bu tarihten itibaren ayrı durum dosyalarıyla paper trading'de (`sim`) izlenir.
+* Parametre, eşik veya yapılandırma izleme sürecinde **değiştirilmez**; değişirse yeni bir deney sayılır ve izleme sıfırlanır.
+* Değerlendirme zamanı: en az **180 gün** *ve* en az **15 tamamlanmış işlem*, hangisi geç gelirse.
+* Ölçüt: aynı dönemde al-tut'a göre Sharpe ve maksimum drawdown. Getiri tek başına ölçüt değildir.
+* Sonuç olumsuz olsa da yayınlanır.

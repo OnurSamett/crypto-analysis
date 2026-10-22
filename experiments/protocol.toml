@@ -6,3 +6,12 @@ context_days = 400                    # ısınma için eval_start'tan önce yük
 dev        = ["2022-01-01", "2024-01-01"]
 validation = ["2024-01-01", "2025-01-01"]
 test       = ["2025-01-01", "2026-10-22"]
+# Yıl dilimleri (Ek 1): rejim davranışını görmek için. Test bölgesine düşenler --allow-test ister ve kaydedilir.
+y2022 = ["2022-01-01", "2023-01-01"]
+y2023 = ["2023-01-01", "2024-01-01"]
+y2024 = ["2024-01-01", "2025-01-01"]
+y2025 = ["2025-01-01", "2026-01-01"]
+y2026 = ["2026-01-01", "2026-10-22"]
+
+[guard]
+test_start = "2025-01-01"             # bitişi bundan sonra olan her dönem test bölgesidir
