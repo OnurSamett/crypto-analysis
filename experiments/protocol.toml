@@ -1,0 +1,8 @@
+# Önceden kaydedilmiş deney protokolü. Bu dosya ve e*.toml yapılandırmaları ilk
+# çalıştırmadan ÖNCE commit'lenir; sonradan değiştirilirse yeni bir deney sayılır.
+context_days = 400                    # ısınma için eval_start'tan önce yüklenen veri (gün)
+
+[periods]                             # [başlangıç (dahil), bitiş (hariç)]
+dev        = ["2022-01-01", "2024-01-01"]
+validation = ["2024-01-01", "2025-01-01"]
+test       = ["2025-01-01", "2026-10-22"]

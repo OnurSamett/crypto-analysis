@@ -1,0 +1,22 @@
+# E2: E1 + hedef volatiliteye göre pozisyon büyüklüğü (enstrüman başına yıllık %20).
+[market]
+mode = "spot"
+instruments = ["BTC-USDT", "ETH-USDT", "SOL-USDT"]
+bar = "1Dutc"
+initial_equity = 10000.0
+
+[weights]
+trend = 0.0
+macd = 0.0
+rsi = 0.0
+volume = 0.0
+funding = 0.0
+donchian = 1.0
+
+[risk]
+max_drawdown = 0.99
+max_atr_pct = 0.20
+use_stop = false           # stop_atr_multiple yalnızca pozisyon büyüklüğünü hesaplamak için kullanılır
+sizing = "vol_target"
+target_vol = 0.20
+vol_window = 20

@@ -1,0 +1,11 @@
+# E0: mevcut kurallı sistem (trend/MACD/RSI/hacim oylaması), yalnızca günlük mumlarda.
+# Saatlik → günlük geçişin etkisini ayırmak için temel çizgi.
+[market]
+mode = "spot"
+instruments = ["BTC-USDT", "ETH-USDT", "SOL-USDT"]
+bar = "1Dutc"
+initial_equity = 10000.0
+
+[risk]
+max_drawdown = 0.99        # araştırmada kill switch devre dışı: çok yıllık koşuyu erken bitirmesin (maks. drawdown ayrıca raporlanır)
+max_atr_pct = 0.20         # 0,05 değeri saatlik mumlar için ayarlanmıştı; günlükte fiilen kapalı

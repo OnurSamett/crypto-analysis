@@ -1,0 +1,53 @@
+# OKX kurallı karar sistemi yapılandırması.
+#
+# ÖNEMLİ: Bu değerler test başlamadan ÖNCE sabitlenir. Backtest raporu bu
+# dosyanın SHA-256 özetini (config_hash) yazar; sonuçlara bakıp ayar
+# değiştirirseniz özet de değişir ve bu raporlarda görünür.
+
+[market]
+mode = "spot"                                   # "spot" | "swap" (swap için [futures] enabled = true gerekir)
+instruments = ["BTC-USDT", "ETH-USDT", "SOL-USDT"]
+bar = "1H"
+initial_equity = 10000.0                        # USDT
+
+# Analist: her sinyal -1 (ayı) ile +1 (boğa) arasında puan üretir.
+[signals]
+ema_fast = 20
+ema_slow = 50
+macd_fast = 12
+macd_slow = 26
+macd_signal = 9
+rsi_period = 14
+atr_period = 14
+volume_window = 20
+
+# Tartışma: ağırlıklı oylama. Skor = Σ ağırlık × sinyal / Σ |ağırlık|
+[weights]
+trend = 0.35
+macd = 0.25
+rsi = 0.20
+volume = 0.20
+funding = 0.0                                   # yalnızca swap modunda etkili
+
+[decision]
+enter_threshold = 0.30                          # skor bunun üstüne çıkınca pozisyon aç
+exit_threshold = -0.10                          # skor bunun altına inince pozisyonu kapat
+
+[risk]
+risk_per_trade = 0.01                           # işlem başına sermayenin en fazla %1'i riske atılır
+stop_atr_multiple = 2.0                         # stop = giriş − 2 × ATR
+max_position_fraction = 0.30                    # coin başına sermayenin en fazla %30'u
+max_drawdown = 0.20                             # zirveden %20 düşüşte tüm pozisyonlar kapanır, işlem durur
+max_atr_pct = 0.05                              # ATR / fiyat %5'i aşarsa yeni giriş veto edilir
+
+[costs]
+fee_rate = 0.001                                # OKX spot taker (standart seviye) %0,10
+slippage = 0.0005                               # piyasa emri kayması varsayımı %0,05
+
+# Vadeli (perpetual swap) modülü: kod hazır, şimdilik DEVRE DIŞI.
+[futures]
+enabled = false
+leverage = 2
+margin_mode = "isolated"                        # "isolated" | "cross"
+allow_short = true
+fee_rate = 0.0005                               # OKX swap taker %0,05
