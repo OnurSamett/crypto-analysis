@@ -64,3 +64,15 @@ aşırı oynak, yorumlanmamalı.
 * Tek piyasa döngüsü, az sayıda bağımsız gözlem. Sonuçlar ipucudur, kanıt değil.
 * Yıllık dilimlerin bileşiği, her yıl yeniden kurulumla hesaplanır; sürekli koşudan farklıdır.
 * Kill switch araştırmada kapalı; gerçek kullanımda açık olacak ve drawdown'lar kesilecektir.
+
+## Registry (kanıt kapısı) sonuçları — R01, 2026-10-22
+Plan, kod ve sonuç sırasıyla commit'lendi (`95bc64a`, `544caa6`, `baf0860`). Sayılar %0,30 maliyet sonrası; p-değerleri dairesel zaman kaydırma permütasyonuyla, Holm düzeltmesi K = 12.
+
+| Varyant (hepsi "düşük funding") | dev ortalama | Holm p | validation ortalama | Karar |
+|---|---|---|---|---|
+| z0=2,0 · 1 gün | +0,18% | 1,00 | −0,24% | 4. ölçütte elendi |
+| z0=2,5 · 1 gün | −0,40% | 1,00 | −0,16% | 3. ölçütte elendi |
+| **z0=2,0 · 3 gün** | **+1,86%** | **0,0096** | +0,40% (90% aralık −0,67% … +1,56%) | 5. ölçütte elendi |
+
+Sayım aşamasında 12 varyanttan yalnızca 3'ü eşikleri geçti; "yüksek funding" varyantlarının hepsi yetersiz kaldı (en yakını dev'de 29 olay, eşik 30). 3 günlük varyant dev'de düzeltme sonrası anlamlıydı ama validation etkisi dev etkisinin %21'i kadardı (kural en az %50). Hiçbir varyant geçmedi.
+R08, bu varyantın yalnızca 2026-10-23 sonrası veriyle, tek hipotez olarak ileriye dönük doğrulamasıdır.

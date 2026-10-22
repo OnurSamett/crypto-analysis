@@ -19,6 +19,10 @@ counts as a new experiment. The Turkish `experiments/PROTOCOL.md` is the authori
 [`experiments/PROTOCOL.en.md`](experiments/PROTOCOL.en.md) is a translation. Results (including negative ones) are in
 [`experiments/RESULTS.en.md`](experiments/RESULTS.en.md).
 
+## Findings
+
+A consolidated log of every result (including negative ones) is in [`docs/FINDINGS.md`](docs/FINDINGS.md); thoughts on a possible paper are in [`docs/PAPER_OUTLINE.md`](docs/PAPER_OUTLINE.md).
+
 ## Install
 
 ```bash

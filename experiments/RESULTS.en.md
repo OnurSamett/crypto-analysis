@@ -64,3 +64,15 @@ window with few cash flows and should not be interpreted.
 * A single market cycle and few independent observations. Results are hints, not proof.
 * The compounding of yearly slices assumes a fresh start every year; it differs from a continuous run.
 * The kill switch is off in the research runs; in real use it will be on and will cut drawdowns.
+
+## Registry (evidence gate) results: R01, 2026-10-22
+Plan, code and results were committed in this order (`95bc64a`, `544caa6`, `baf0860`). Numbers are after a 0.30% round trip; p-values use a circular time-shift permutation, Holm correction with K = 12.
+
+| Variant (all "low funding") | dev mean | Holm p | validation mean | Outcome |
+|---|---|---|---|---|
+| z0=2.0 · 1 day | +0.18% | 1.00 | −0.24% | failed criterion 4 |
+| z0=2.5 · 1 day | −0.40% | 1.00 | −0.16% | failed criterion 3 |
+| **z0=2.0 · 3 days** | **+1.86%** | **0.0096** | +0.40% (90% interval −0.67% … +1.56%) | failed criterion 5 |
+
+In the count stage only 3 of 12 variants reached the thresholds; every "high funding" variant was insufficient (closest: 29 dev events vs the threshold of 30). The 3-day variant was significant in dev after correction, but its validation effect was 21% of the dev effect (the rule requires at least 50%). No variant passed.
+R08 is the forward, single-hypothesis replication of this variant using data after 2026-10-23 only.

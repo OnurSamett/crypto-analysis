@@ -18,6 +18,10 @@ oluşturmak. Aynı backtest motoru ve aynı `Sinyal → Karar` arayüzü ajanlar
 (`finans analiz programı`, `okx_karar/` altında) commit'lendi. Bu depo o dosyaların kopyasıyla başlar;
 sonradan değiştirilirse yeni bir deney sayılır.
 
+## Bulgular
+
+Tüm sonuçların (olumsuzlar dahil) toplu kaydı [`docs/FINDINGS.md`](docs/FINDINGS.md) içindedir (İngilizce); olası bir makale üzerine notlar [`docs/PAPER_OUTLINE.md`](docs/PAPER_OUTLINE.md) dosyasında.
+
 ## Kurulum
 
 ```bash
