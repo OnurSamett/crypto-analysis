@@ -1,0 +1,293 @@
+{
+  "generated_at": "2026-10-22 09:14 UTC",
+  "results": [
+    {
+      "variant": "z0=2.0 h=1d side=high",
+      "z0": 2.0,
+      "horizon": "1d",
+      "side": "high",
+      "n_dev": 29,
+      "n_validation": 39,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.0 h=3d side=high",
+      "z0": 2.0,
+      "horizon": "3d",
+      "side": "high",
+      "n_dev": 15,
+      "n_validation": 17,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.0 h=7d side=high",
+      "z0": 2.0,
+      "horizon": "7d",
+      "side": "high",
+      "n_dev": 11,
+      "n_validation": 10,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.5 h=1d side=high",
+      "z0": 2.5,
+      "horizon": "1d",
+      "side": "high",
+      "n_dev": 26,
+      "n_validation": 32,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.5 h=3d side=high",
+      "z0": 2.5,
+      "horizon": "3d",
+      "side": "high",
+      "n_dev": 13,
+      "n_validation": 13,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.5 h=7d side=high",
+      "z0": 2.5,
+      "horizon": "7d",
+      "side": "high",
+      "n_dev": 9,
+      "n_validation": 9,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.0 h=1d side=low",
+      "z0": 2.0,
+      "horizon": "1d",
+      "side": "low",
+      "n_dev": 113,
+      "n_validation": 37,
+      "count_verdict": "COUNT_OK",
+      "mean_dev": 0.0017914882070089143,
+      "mean_val": -0.0024308720706430467,
+      "p_dev": 0.11277744451109778,
+      "p_val_info": 0.6044791041791642,
+      "null_mean_dev": -0.002754449871959472,
+      "ci90_val": [
+        -0.011777273819757218,
+        0.007399872586448678
+      ],
+      "clusters_used_dev": 113,
+      "clusters_used_val": 37,
+      "events_skipped_dev": 0,
+      "events_skipped_val": 0,
+      "drift_dev": -0.0025922423648554035,
+      "drift_val": -0.0007479862877390727,
+      "per_coin_mean": {
+        "BTC": 0.00724957103879445,
+        "ETH": -0.002913829672153978,
+        "SOL": -0.005966884764000264
+      },
+      "per_coin_n": {
+        "BTC": 79,
+        "ETH": 73,
+        "SOL": 74
+      },
+      "robustness": {
+        "x0.8": {
+          "dev": [
+            0.0017287990063141882,
+            163
+          ],
+          "validation": [
+            0.0009870277283097891,
+            49
+          ]
+        },
+        "x1.2": {
+          "dev": [
+            -0.005928280589618979,
+            86
+          ],
+          "validation": [
+            -0.0011794642718073061,
+            26
+          ]
+        }
+      },
+      "audit_ok": true,
+      "p_dev_holm": 1.0,
+      "failed_criterion": 4,
+      "tier": "FAILED GATE (criterion 4)"
+    },
+    {
+      "variant": "z0=2.0 h=3d side=low",
+      "z0": 2.0,
+      "horizon": "3d",
+      "side": "low",
+      "n_dev": 67,
+      "n_validation": 17,
+      "count_verdict": "COUNT_OK",
+      "mean_dev": 0.018603641427305043,
+      "mean_val": 0.004010887243587587,
+      "p_dev": 0.0007998400319936012,
+      "p_val_info": 0.45670865826834633,
+      "null_mean_dev": -0.0018852787212440866,
+      "ci90_val": [
+        -0.006710696842050602,
+        0.015594209356512243
+      ],
+      "clusters_used_dev": 67,
+      "clusters_used_val": 17,
+      "events_skipped_dev": 0,
+      "events_skipped_val": 0,
+      "drift_dev": -0.0016543122791655828,
+      "drift_val": 0.0035622968314467634,
+      "per_coin_mean": {
+        "BTC": 0.014547361187288528,
+        "ETH": 0.005010432411674734,
+        "SOL": 0.006305503250057912
+      },
+      "per_coin_n": {
+        "BTC": 52,
+        "ETH": 44,
+        "SOL": 45
+      },
+      "robustness": {
+        "x0.8": {
+          "dev": [
+            0.010394058690890533,
+            88
+          ],
+          "validation": [
+            0.00902897796932192,
+            22
+          ]
+        },
+        "x1.2": {
+          "dev": [
+            0.009539428542829662,
+            53
+          ],
+          "validation": [
+            0.015269535490742567,
+            14
+          ]
+        }
+      },
+      "audit_ok": true,
+      "p_dev_holm": 0.009598080383923215,
+      "failed_criterion": 5,
+      "tier": "FAILED GATE (criterion 5)"
+    },
+    {
+      "variant": "z0=2.0 h=7d side=low",
+      "z0": 2.0,
+      "horizon": "7d",
+      "side": "low",
+      "n_dev": 41,
+      "n_validation": 10,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.5 h=1d side=low",
+      "z0": 2.5,
+      "horizon": "1d",
+      "side": "low",
+      "n_dev": 72,
+      "n_validation": 21,
+      "count_verdict": "COUNT_OK",
+      "mean_dev": -0.004000594569333412,
+      "mean_val": -0.0016202474594378654,
+      "p_dev": 0.609878024395121,
+      "p_val_info": 0.5464907018596281,
+      "null_mean_dev": -0.0026031803289761966,
+      "ci90_val": [
+        -0.0172455746862521,
+        0.015308940657180326
+      ],
+      "clusters_used_dev": 72,
+      "clusters_used_val": 21,
+      "events_skipped_dev": 0,
+      "events_skipped_val": 0,
+      "drift_dev": -0.0025922423648554035,
+      "drift_val": -0.0007479862877390727,
+      "per_coin_mean": {
+        "BTC": 0.007634954742231559,
+        "ETH": -0.012073632909231642,
+        "SOL": -0.014915441887611779
+      },
+      "per_coin_n": {
+        "BTC": 39,
+        "ETH": 36,
+        "SOL": 48
+      },
+      "robustness": {
+        "x0.8": {
+          "dev": [
+            0.0017914882070089143,
+            113
+          ],
+          "validation": [
+            -0.0024308720706430467,
+            37
+          ]
+        },
+        "x1.2": {
+          "dev": [
+            -0.005312663190930779,
+            51
+          ],
+          "validation": [
+            -0.006684990865558588,
+            12
+          ]
+        }
+      },
+      "audit_ok": true,
+      "p_dev_holm": 1.0,
+      "failed_criterion": 3,
+      "tier": "FAILED GATE (criterion 3)"
+    },
+    {
+      "variant": "z0=2.5 h=3d side=low",
+      "z0": 2.5,
+      "horizon": "3d",
+      "side": "low",
+      "n_dev": 45,
+      "n_validation": 12,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    },
+    {
+      "variant": "z0=2.5 h=7d side=low",
+      "z0": 2.5,
+      "horizon": "7d",
+      "side": "low",
+      "n_dev": 33,
+      "n_validation": 8,
+      "count_verdict": "INSUFFICIENT",
+      "tier": "INSUFFICIENT",
+      "p_dev": 1.0,
+      "p_dev_holm": 1.0
+    }
+  ]
+}

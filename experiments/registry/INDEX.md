@@ -23,3 +23,8 @@ All entries registered **2026-10-22**, before any test. Gate: `../PROTOCOL.md` �
   Near miss, not bent: `z0=2.0 h=1d side=high` has n_dev = 29 (threshold 30).
   Data note: SOL had 101 irregular funding steps (98 of 2 h, 3 of 4 h), all between 2022-11-09 and 2022-11-18. Per plan, windows containing them are excluded, which leaves SOL with a defined z-score for 84% of its dev settlements (BTC and ETH: 100%).
   The return stage for the 3 surviving variants requires a separate go-ahead.
+- 2026-10-22: R01 return stage run **once** (plan `95bc64a`, code `544caa6`). Results: [`R01_returns.md`](R01_returns.md) / `R01_returns.json`. No variant reached `MONITORING`.
+  * `z0=2.0 h=1d low`: dev +0.18%, raw p = 0.113, Holm p = 1.0 → FAILED GATE (criterion 4).
+  * `z0=2.5 h=1d low`: dev −0.40% → FAILED GATE (criterion 3).
+  * `z0=2.0 h=3d low`: dev +1.86%, raw p = 0.0008, **Holm p = 0.0096** (criteria 3 and 4 passed); validation +0.40% (90% interval −0.67% … +1.56%), i.e. 21% of the dev effect, below the 50% required → **FAILED GATE (criterion 5)**. Criteria 6 and 7 would have passed (all three coins positive, both z0 perturbations positive, audit passed) but are not reached under the first-failure rule. The verdict is not bent.
+  Interpretation: a dev result that is significant even after correcting for 12 variants did not hold up out of sample; same sign, much smaller. Consistent with a weak or decayed effect, or noise. Nothing is sent as a signal.
