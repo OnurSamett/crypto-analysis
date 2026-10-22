@@ -20,7 +20,7 @@ from pathlib import Path
 import pandas as pd
 
 from okx_karar.backtest import run_backtest
-from okx_karar.config import load_config, paper_unsupported
+from okx_karar.config import load_config
 from okx_karar.data import count_gaps, fetch_funding, fetch_recent, load_candles
 from okx_karar.executors import OKXDemoSpotExecutor, SimExecutor
 from okx_karar.grid import GridParams, simulate_grid_portfolio
@@ -86,13 +86,19 @@ def cmd_backtest(cfg, args, base: Path) -> int:
     return 0
 
 
-def _paper_paths(base: Path, executor_name: str) -> tuple[Path, Path]:
-    return base / "state" / f"paper_{executor_name}.json", base / "state" / f"trades_{executor_name}.csv"
+def _label(args) -> str:
+    """Durum dosyaları yapılandırmaya özeldir; böylece E3 ve E4 aynı hesabı paylaşmaz."""
+    return Path(args.config).stem if args.config else "default"
 
 
-def _make_executor(cfg, name: str, base: Path, client: OKXClient):
+def _paper_paths(base: Path, executor_name: str, label: str = "default") -> tuple[Path, Path]:
+    return (base / "state" / f"paper_{label}_{executor_name}.json",
+            base / "state" / f"trades_{label}_{executor_name}.csv")
+
+
+def _make_executor(cfg, name: str, base: Path, client: OKXClient, label: str = "default"):
     if name == "sim":
-        return SimExecutor(base / "state" / "sim_account.json", cfg.initial_equity,
+        return SimExecutor(base / "state" / f"sim_account_{label}.json", cfg.initial_equity,
                            cfg.effective_costs(), allow_short=cfg.allow_short)
     if cfg.is_swap:
         from okx_karar.futures import OKXDemoSwapExecutor
@@ -101,19 +107,11 @@ def _make_executor(cfg, name: str, base: Path, client: OKXClient):
     return OKXDemoSpotExecutor(client, cfg)
 
 
-def _refuse_research_features(cfg) -> None:
-    extra = paper_unsupported(cfg)
-    if extra:
-        raise SystemExit("Bu yapılandırma yalnızca araştırma backtest'inde desteklenen özellikler içeriyor: "
-                         + ", ".join(extra) + ". Paper/demo'da henüz yok (backtest ile farklı davranırdı).")
-
-
 def cmd_paper(cfg, args, base: Path) -> int:
-    _refuse_research_features(cfg)
     load_env(base / ".env")
     client = OKXClient.from_env()
-    executor = _make_executor(cfg, args.executor, base, client)
-    state_path, trade_log = _paper_paths(base, args.executor)
+    executor = _make_executor(cfg, args.executor, base, client, _label(args))
+    state_path, trade_log = _paper_paths(base, args.executor, _label(args))
 
     if cfg.is_swap:
         from okx_karar.futures import swap_inst_id
@@ -139,11 +137,10 @@ def cmd_paper(cfg, args, base: Path) -> int:
 
 
 def cmd_status(cfg, args, base: Path) -> int:
-    _refuse_research_features(cfg)
     load_env(base / ".env")
     client = OKXClient.from_env()
-    executor = _make_executor(cfg, args.executor, base, client)
-    state_path, trade_log = _paper_paths(base, args.executor)
+    executor = _make_executor(cfg, args.executor, base, client, _label(args))
+    state_path, trade_log = _paper_paths(base, args.executor, _label(args))
     state = PaperState.load(state_path)
     prices = {i: float(fetch_recent(client, i, cfg.bar, limit=2)["close"].iloc[-1]) for i in cfg.instruments}
     print(f"Sermaye   : {executor.equity(prices):.2f} (zirve: {state.peak_equity or 0:.2f})")

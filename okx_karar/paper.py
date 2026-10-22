@@ -1,6 +1,7 @@
 """Paper trading döngüsü: her mum kapanışında karar ver, yürütücüye ilet.
 
-Backtest ile aynı karar ve risk kodunu kullanır. Farklar:
+Backtest ile aynı karar ve risk kodunu kullanır (Donchian, rejim filtresi, giriş onayı, hedef volatilite ve
+stop'suz mod dahil; uyum tests/test_paper_parity.py ile doğrulanır). Farklar:
   * Emir, kapanıştan hemen sonra o anki fiyattan verilir (backtest: sonraki açılış).
   * Stop bot tarafından mum kapanışlarında kontrol edilir; borsada bekleyen stop emri yoktur.
     Bu yüzden mum içinde stop'un çok altına inen bir hareket yakalanamaz.
@@ -20,9 +21,9 @@ from typing import Callable
 import pandas as pd
 
 from okx_karar.config import Config
-from okx_karar.decision import next_target, score_frame
+from okx_karar.decision import entry_gate, next_target, score_frame
 from okx_karar.executors import MIN_NOTIONAL, Fill
-from okx_karar.risk import DrawdownGuard, entry_veto, position_size, stop_price
+from okx_karar.risk import DrawdownGuard, entry_veto, position_size, stop_price, vol_target_size
 from okx_karar.signals import compute_signals
 
 
@@ -137,12 +138,26 @@ def run_once(
 
     # 3) Kararlar.
     weights = cfg.effective_weights()
+    dcfg = cfg.decision
+    if cfg.regime.enabled:
+        ref_close = frames[cfg.regime.reference]["close"]
+        ref_ma = ref_close.rolling(cfg.regime.sma_bars).mean().iloc[-1]
+        regime_ok = bool(not math.isnan(ref_ma) and ref_close.iloc[-1] > ref_ma)
+    else:
+        regime_ok = True
     plans = []
     for i in new:
         funding = fetch_funding(i) if (cfg.is_swap and weights.funding and fetch_funding) else None
         sig = compute_signals(frames[i], cfg.signals, funding, cfg.bar_seconds)
-        score = float(score_frame(sig, weights).iloc[-1])
+        score_series = score_frame(sig, weights)
+        score = float(score_series.iloc[-1])
         atr_value = float(sig["atr"].iloc[-1])
+        ann_vol = float(sig["ann_vol"].iloc[-1])
+        if dcfg.confirm_bars > 1 or dcfg.confirm_volume > 0:
+            gate_ok = bool(entry_gate(score_series, sig["vol_ratio"], dcfg.enter_threshold, dcfg.confirm_bars,
+                                      dcfg.confirm_volume, side=1).iloc[-1])
+        else:
+            gate_ok = True
         cur = side_of(i)
         blocked = state.blocked.get(i, 0)
         if blocked == 1 and score < cfg.decision.exit_threshold:
@@ -154,6 +169,10 @@ def run_once(
         tgt = next_target(score, cur, cfg.decision.enter_threshold, cfg.decision.exit_threshold, cfg.allow_short)
         if tgt != 0 and tgt == blocked:
             tgt = 0
+        if cur == 0 and tgt == 1 and not (gate_ok and regime_ok):
+            events.append(f"{i}: skor {score:+.2f}, yeni long filtreye takıldı "
+                          f"(rejim {'tamam' if regime_ok else 'olumsuz'}, onay {'tamam' if gate_ok else 'yok'})")
+            continue
         if math.isnan(score):
             events.append(f"{i}: yeterli veri yok, karar verilmedi")
         if tgt == cur:
@@ -167,20 +186,24 @@ def run_once(
                     continue
                 tgt = 0
         events.append(f"{i}: skor {score:+.2f}, yön {cur:+d} → {tgt:+d}")
-        plans.append((i, cur, tgt, atr_value))
+        plans.append((i, cur, tgt, atr_value, ann_vol))
 
     # 4) Önce kapat, sonra aç (nakit serbest kalsın).
-    for i, cur, tgt, _ in plans:
+    for i, cur, tgt, _, _ in plans:
         if cur != 0:
             do_trade(i, -positions.get(i, 0.0), "c", "sinyal")
             state.stops.pop(i, None)
-    for i, cur, tgt, atr_value in plans:
+    for i, cur, tgt, atr_value, ann_vol in plans:
         if tgt == 0:
             continue
         equity = executor.equity(prices)
-        qty = tgt * position_size(equity, prices[i], atr_value, cfg.risk, cfg.leverage)
+        if cfg.risk.sizing == "vol_target":
+            size = vol_target_size(equity, prices[i], ann_vol, cfg.risk, cfg.leverage)
+        else:
+            size = position_size(equity, prices[i], atr_value, cfg.risk, cfg.leverage)
+        qty = tgt * size
         fill = do_trade(i, qty, "o", "sinyal") if qty else None
-        if fill:
+        if fill and cfg.risk.use_stop:
             state.stops[i] = stop_price(fill.price, atr_value, cfg.risk, tgt)
 
     for i in new:

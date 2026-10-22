@@ -190,18 +190,3 @@ def load_config(path: str | Path) -> Config:
     )
     return validate(cfg)
 
-
-def paper_unsupported(cfg: Config) -> list[str]:
-    """Yalnızca araştırma backtest'inde bulunan özellikler. Paper/demo'ya sessizce farklı davranmasın diye reddedilir."""
-    out = []
-    if cfg.weights.donchian:
-        out.append("donchian sinyali")
-    if cfg.regime.enabled:
-        out.append("rejim filtresi")
-    if cfg.risk.sizing != "atr_stop":
-        out.append(f"{cfg.risk.sizing} pozisyon büyüklüğü")
-    if not cfg.risk.use_stop:
-        out.append("stop'suz çalışma")
-    if cfg.decision.confirm_bars > 1 or cfg.decision.confirm_volume:
-        out.append("giriş onayı")
-    return out

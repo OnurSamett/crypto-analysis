@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from okx_karar.backtest import run_backtest
-from okx_karar.config import Config, DecisionCfg, RegimeCfg, RiskCfg, Weights, load_config, paper_unsupported
+from okx_karar.config import Config, DecisionCfg, RegimeCfg, RiskCfg, Weights, load_config
 from okx_karar.decision import entry_gate
 from okx_karar.risk import vol_target_size
 from okx_karar.signals import donchian_state
@@ -57,17 +57,14 @@ def test_vol_target_size_caps_and_scales():
     assert vol_target_size(10_000, 100, 0.0, cfg) == 0.0
 
 
-def test_experiment_configs_load_and_are_flagged_for_paper():
+def test_experiment_configs_load():
+    e1, e2, e3, e4 = (load_config(ROOT / "experiments" / f"{n}.toml")
+                      for n in ("e1_donchian", "e2_voltarget", "e3_regime", "e4_confirm"))
     for name in ("e0_daily_baseline", "e1_donchian", "e2_voltarget", "e3_regime", "e4_confirm"):
         cfg = load_config(ROOT / "experiments" / f"{name}.toml")
         assert cfg.bar == "1Dutc" and cfg.risk.max_drawdown == 0.99
-    e0, e1, e2, e3, e4 = (load_config(ROOT / "experiments" / f"{n}.toml")
-                          for n in ("e0_daily_baseline", "e1_donchian", "e2_voltarget", "e3_regime", "e4_confirm"))
-    assert paper_unsupported(e0) == [] and paper_unsupported(load_config(ROOT / "config.toml")) == []
-    assert "donchian sinyali" in paper_unsupported(e1)
-    assert any("vol_target" in x for x in paper_unsupported(e2))
-    assert "rejim filtresi" in paper_unsupported(e3) and "giriş onayı" in paper_unsupported(e4)
-    assert e1.signals.donchian_lookbacks == (20, 50, 100) and e1.weights.donchian == 1.0
+    assert e1.signals.donchian_lookbacks == (20, 50, 100) and e1.weights.donchian == 1.0 and not e1.risk.use_stop
+    assert e2.risk.sizing == "vol_target" and e3.regime.enabled and e4.decision.confirm_bars == 2
 
 
 def test_regime_blocks_new_entries_only_when_reference_below_sma():
