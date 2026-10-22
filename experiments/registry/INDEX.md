@@ -12,6 +12,8 @@ All entries registered **2026-10-22**, before any test. Gate: `../PROTOCOL.md` �
 | [R06](R06_session_effect.md) | Trading session | calendar | 3 | Yes (4H candles) | Hard: literature finds no persistence |
 | [R07](R07_vip_channel_signals.md) | Telegram VIP channel | external | 1 | After export (chronological split) | Likely null; integrity report is the main value |
 
+| [R08](R08_r01_3d_forward_replication.md) | R01 `z0=2.0 h=3d low`: forward replication | replication | 1 | Forward-only (from 2026-10-23) | Slow: ≥ 180 days and ≥ 15 clusters, evaluated once |
+
 **Not registered on purpose:** hour-of-day (24 hypotheses), month-of-year, holidays: too many comparisons for too little evidence. Each would need its own entry.
 
 **Status legend:** REGISTERED (not run) → RUNNING → `INSUFFICIENT` | `FAILED GATE (criterion n)` | `MONITORING` | `VALIDATED`. Updates are appended below, never edited in place.
@@ -28,3 +30,4 @@ All entries registered **2026-10-22**, before any test. Gate: `../PROTOCOL.md` �
   * `z0=2.5 h=1d low`: dev −0.40% → FAILED GATE (criterion 3).
   * `z0=2.0 h=3d low`: dev +1.86%, raw p = 0.0008, **Holm p = 0.0096** (criteria 3 and 4 passed); validation +0.40% (90% interval −0.67% … +1.56%), i.e. 21% of the dev effect, below the 50% required → **FAILED GATE (criterion 5)**. Criteria 6 and 7 would have passed (all three coins positive, both z0 perturbations positive, audit passed) but are not reached under the first-failure rule. The verdict is not bent.
   Interpretation: a dev result that is significant even after correcting for 12 variants did not hold up out of sample; same sign, much smaller. Consistent with a weak or decayed effect, or noise. Nothing is sent as a signal.
+- 2026-10-22: R08 registered (forward replication of the R01 3-day low-funding variant). Not run; evaluated once after >= 180 days and >= 15 independent clusters.
