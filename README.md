@@ -33,6 +33,15 @@ python3 -m okx_karar paper --executor demo        # OKX demo hesabında (anahtar
 python3 -m okx_karar status --executor sim
 ```
 
+## Bildirim botu ve veri toplayıcı (emir vermez)
+
+```bash
+python3 -m okx_karar notify --dry-run     # sinyal durumunu ekrana yazar (E3 günlük + E5 4 saatlik)
+python3 -m okx_karar notify               # değişiklik varsa Telegram'a gönderir
+python3 -m okx_karar collect              # funding, açık pozisyon, derinlik, uzun/kısa oranı → data/collector.db
+```
+Mac mini kurulumu ve Telegram botu için: [`deploy/README.md`](deploy/README.md).
+
 ## Karar akışı
 
 | Rol | Modül | Ne yapar |

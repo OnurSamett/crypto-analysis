@@ -5,6 +5,8 @@
   paper     her mum kapanışında karar verir (--executor sim | demo)
   status    paper hesabın durumunu gösterir
   evaluate  önceden kaydedilmiş protokolle yapılandırmaları dönem dönem değerlendirir
+  collect   kendi veri toplayıcımız: funding, açık pozisyon, derinlik, uzun/kısa oranı → data/collector.db
+  notify    sinyal durumu değişince Telegram/macOS/konsol bildirimi (emir vermez)
   dca       E6: düz DCA ve BTC 200g rejim eğimi (dönem dönem)
   audit     sinyaller geleceğe bakıyor mu / geçmiş uzunluğuna bağımlı mı (gerçek veride)
   compare   yıl yıl: kurallı strateji vs grid vs al-tut (önbellekteki veriyle)
@@ -14,6 +16,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import tomllib
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -287,6 +290,98 @@ def cmd_dca(cfg, args, base: Path) -> int:
     return 0
 
 
+def cmd_notify(_cfg, args, base: Path) -> int:
+    """Telegram/macOS/konsol bildirimi: sinyal durumu değiştiğinde (ve haftalık) haber verir; emir vermez."""
+    from okx_karar.advisory import assess, required_bars
+    from okx_karar.notifier import NotifyError, build_senders, find_chat_ids, format_message
+
+    load_env(base / ".env")
+    if args.get_chat_id:
+        ids = find_chat_ids(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+        if not ids:
+            print("Henüz mesaj yok. Telegram'da botunuza /start yazıp bu komutu tekrar çalıştırın.")
+        for cid, name in ids:
+            print(f"TELEGRAM_CHAT_ID={cid}   ({name})")
+        return 0
+    channels = ["console"] if args.dry_run else [c.strip() for c in args.channels.split(",") if c.strip()]
+    try:
+        senders = build_senders(channels)
+    except NotifyError as exc:
+        raise SystemExit(str(exc))
+    if args.test:
+        for sd in senders:
+            sd.send("✅ crypto-analysis bağlantı testi: bildirimler çalışıyor. (Bilgi amaçlıdır, emir vermez.)")
+        return 0
+
+    client = OKXClient()
+    now = pd.Timestamp.now(tz="UTC")
+    state_dir = base / "state"
+    state_dir.mkdir(exist_ok=True)
+    meta_path = state_dir / "notify_meta.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    failures = 0
+
+    def send_all(text: str) -> None:
+        for sd in senders:
+            sd.send(text)
+
+    for cfg_path in (c.strip() for c in args.configs.split(",")):
+        cfg = load_config(base / cfg_path)
+        label = Path(cfg_path).stem
+        state_path = state_dir / f"notify_{label}.json"
+        state = None if args.force_snapshot or not state_path.exists() else json.loads(state_path.read_text())
+        try:
+            start = now - pd.Timedelta(seconds=required_bars(cfg) * cfg.bar_seconds)
+            frames = {i: load_candles(client, i, cfg.bar, start, None, base / "data") for i in cfg.instruments}
+            if state and all(frames[i].index[-1] <= pd.Timestamp(state["last_bar"].get(i, "1970-01-01T00:00:00+00:00"))
+                             for i in cfg.instruments):
+                print(f"[{label}] yeni kapanmış bar yok")
+                continue
+            a, new_state = assess(cfg, frames, state, label)
+            weekly = (a.as_of.weekday() == 0 and new_state.get("last_weekly") != a.as_of.date().isoformat()
+                      and not a.snapshot)
+            if a.events or a.snapshot or weekly:
+                send_all(format_message(a, label.split("_")[0].upper(), weekly=weekly))
+            else:
+                print(f"[{label}] olay yok, mesaj gönderilmedi")
+            if weekly:
+                new_state["last_weekly"] = a.as_of.date().isoformat()
+            if not args.dry_run:
+                state_path.write_text(json.dumps(new_state, indent=2), encoding="utf-8")
+        except Exception as exc:  # tek yapılandırmanın hatası diğerlerini durdurmasın
+            failures += 1
+            print(f"[{label}] HATA: {type(exc).__name__}: {exc}")
+            today = now.date().isoformat()
+            if not args.dry_run and meta.get("last_error_notice") != today:
+                try:
+                    send_all(f"⚠️ crypto-analysis ({label}) hata verdi: {type(exc).__name__}. Ayrıntı günlükte.")
+                    meta["last_error_notice"] = today
+                except Exception:
+                    pass
+    if not args.dry_run:
+        meta_path.write_text(json.dumps(meta), encoding="utf-8")
+    return 1 if failures else 0
+
+
+def cmd_collect(_cfg, args, base: Path) -> int:
+    """Kendi veri toplayıcımız: bir anlık görüntü alıp data/collector.db'ye yazar (launchd 5 dakikada bir çağırır)."""
+    from okx_karar.collector import collect_once, connect, summary
+
+    conn = connect(base / "data" / "collector.db")
+    if args.summary:
+        for table, v in summary(conn).items():
+            span = ""
+            if v["rows"]:
+                a, b = (pd.to_datetime(v[k], unit="ms", utc=True).strftime("%Y-%m-%d %H:%M") for k in ("first_ms", "last_ms"))
+                span = f"  {a} → {b} UTC"
+            print(f"{table:<8}{v['rows']:>9} satır{span}")
+        return 0
+    result = collect_once(OKXClient(), conn, ratio_period=args.ratio_period)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    print(f"[{stamp}] +{result['rows']} satır" + (f"; hata: {', '.join(result['errors'])}" if result["errors"] else ""))
+    return 1 if len(result["errors"]) >= 6 else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="okx_karar", description="OKX kurallı karar sistemi")
     parser.add_argument("--config", default=None, help="yapılandırma dosyası (varsayılan: proje içindeki config.toml)")
@@ -319,6 +414,19 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--periods", default="dev,validation", help="protocol.toml'daki dönem adları")
     p.add_argument("--allow-test", action="store_true", help="test bölgesini aç (kayıt altına alınır)")
 
+    p = sub.add_parser("notify")
+    p.add_argument("--configs", default="experiments/e3_regime.toml,experiments/e5_fast4h.toml",
+                   help="virgülle ayrılmış yapılandırmalar")
+    p.add_argument("--channels", default="telegram", help="telegram,macos,console")
+    p.add_argument("--dry-run", action="store_true", help="yalnızca konsola yaz, durumu kaydetme")
+    p.add_argument("--test", action="store_true", help="kanallara bağlantı testi mesajı gönder")
+    p.add_argument("--get-chat-id", action="store_true", help="bota /start yazdıktan sonra sohbet kimliğini göster")
+    p.add_argument("--force-snapshot", action="store_true", help="durumu sıfırdan kur ve özet gönder")
+
+    p = sub.add_parser("collect")
+    p.add_argument("--summary", action="store_true", help="birikmiş verinin özetini göster")
+    p.add_argument("--ratio-period", default="1H", help="rubik istatistik periyodu (5m, 1H, 1D)")
+
     p = sub.add_parser("status")
     p.add_argument("--executor", choices=("sim", "demo"), default="sim")
 
@@ -326,5 +434,5 @@ def main(argv: list[str] | None = None) -> int:
     base = Path(__file__).resolve().parent.parent
     cfg = load_config(args.config or base / "config.toml")
     handlers = {"fetch": cmd_fetch, "backtest": cmd_backtest, "paper": cmd_paper, "status": cmd_status,
-                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit, "dca": cmd_dca}
+                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit, "dca": cmd_dca, "notify": cmd_notify, "collect": cmd_collect}
     return handlers[args.cmd](cfg, args, base)

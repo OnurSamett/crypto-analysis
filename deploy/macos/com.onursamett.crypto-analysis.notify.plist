@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.onursamett.crypto-analysis.notify</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PY__</string>
+    <string>-m</string>
+    <string>okx_karar</string>
+    <string>notify</string>
+  </array>
+  <key>WorkingDirectory</key><string>__REPO__</string>
+  <!-- Her saat :05'te çalışır; yeni kapanmış mum yoksa hiçbir şey yapmaz (4 saatlik ve günlük mumlar için yeterli). -->
+  <key>StartCalendarInterval</key>
+  <dict><key>Minute</key><integer>5</integer></dict>
+  <key>StandardOutPath</key><string>__LOGS__/notify.log</string>
+  <key>StandardErrorPath</key><string>__LOGS__/notify.err.log</string>
+</dict>
+</plist>

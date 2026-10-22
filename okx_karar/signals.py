@@ -33,16 +33,21 @@ def align_funding(index: pd.DatetimeIndex, funding: pd.Series, bar_seconds: int)
     return pd.Series(values, index=index)
 
 
-def donchian_state(df: pd.DataFrame, lookbacks) -> pd.Series:
-    """Donchian kanal trend modelleri topluluğu: her bakış süresi için durum +1 (önceki k barın en yükseğini
-    yukarı kıran son kırılım) ya da −1 (en düşüğü aşağı kıran); ortalaması −1…+1 arası skor verir.
-    Kanal sınırları bir önceki bardan itibaren hesaplanır (mevcut bar dahil değil)."""
+def donchian_window_states(df: pd.DataFrame, lookbacks) -> list[pd.Series]:
+    """Her bakış süresi için Donchian durumu: +1 (önceki k barın en yükseğini yukarı kıran son kırılım) ya da −1
+    (en düşüğü aşağı kıran). Kanal sınırları bir önceki bardan itibaren hesaplanır (mevcut bar dahil değil)."""
     states = []
     for k in lookbacks:
         upper = df["high"].rolling(k).max().shift(1)
         lower = df["low"].rolling(k).min().shift(1)
         raw = pd.Series(np.where(df["close"] > upper, 1.0, np.where(df["close"] < lower, -1.0, np.nan)), index=df.index)
         states.append(raw.ffill().fillna(0.0))
+    return states
+
+
+def donchian_state(df: pd.DataFrame, lookbacks) -> pd.Series:
+    """Donchian kanal trend modelleri topluluğu: pencere durumlarının ortalaması, −1…+1 arası skor."""
+    states = donchian_window_states(df, lookbacks)
     return sum(states) / len(states)
 
 

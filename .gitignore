@@ -4,3 +4,6 @@ state/
 results/
 .pytest_cache/
 __pycache__/
+
+# Özel veriler (ücretli kanal dışa aktarımları vb.): asla repoya girmez
+private/

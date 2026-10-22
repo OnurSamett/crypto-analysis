@@ -140,6 +140,10 @@ class OKXClient:
         raise RuntimeError(f"OKX isteği başarısız ({path}): {last_exc}")
 
     # ------------------------------------------------------------------ public
+    def public_get(self, path: str, params: dict | None = None) -> list:
+        """Anahtar gerektirmeyen herhangi bir GET uç noktası (veri toplayıcı için)."""
+        return self._request("GET", path, params)
+
     def get_candles(self, inst_id: str, bar: str, limit: int = 300) -> list:
         """En yeni mumlar (en fazla 300). Satırlar yeniden eskiye sıralıdır."""
         return self._request("GET", "/api/v5/market/candles", {"instId": inst_id, "bar": bar, "limit": limit})
