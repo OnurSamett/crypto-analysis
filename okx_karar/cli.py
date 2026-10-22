@@ -5,6 +5,7 @@
   paper     her mum kapanışında karar verir (--executor sim | demo)
   status    paper hesabın durumunu gösterir
   evaluate  önceden kaydedilmiş protokolle yapılandırmaları dönem dönem değerlendirir
+  audit     sinyaller geleceğe bakıyor mu / geçmiş uzunluğuna bağımlı mı (gerçek veride)
   compare   yıl yıl: kurallı strateji vs grid vs al-tut (önbellekteki veriyle)
 """
 from __future__ import annotations
@@ -221,6 +222,37 @@ def cmd_evaluate(_cfg, args, base: Path) -> int:
     return 0
 
 
+def cmd_audit(cfg, args, base: Path) -> int:
+    """Sinyaller geleceğe bakıyor mu, ve geçmiş uzunluğuna ne kadar bağlı? (gerçek veride)"""
+    from okx_karar.audit import recursion_audit, truncation_audit
+    from okx_karar.decision import score_frame
+    from okx_karar.signals import compute_signals
+
+    weights = cfg.effective_weights()
+
+    def compute(df):
+        sig = compute_signals(df, cfg.signals, None, cfg.bar_seconds)
+        sig["score"] = score_frame(sig, weights)
+        return sig
+
+    ok = True
+    for inst in cfg.instruments:
+        df = load_candles(None, inst, cfg.bar, pd.Timestamp("2021-02-01", tz="UTC"), None, base / "data", offline=True)
+        t = truncation_audit(df, compute)
+        ok &= not t["has_bias"]
+        worst = max(v for v in t["max_diff"].values() if v == v) if any(v == v for v in t["max_diff"].values()) else 0.0
+        print(f"{inst}: kesme testi {'GEÇTİ' if not t['has_bias'] else 'KALDI ' + ', '.join(t['biased_columns'])}"
+              f" ({t['checked_bars']} bar, en büyük fark {worst:.2e})")
+        rec = recursion_audit(df, compute, lengths=tuple(int(x) for x in args.lengths.split(",")))
+        cols = ["donchian", "trend", "atr", "ann_vol", "score"]
+        print(f"  son satırın geçmiş uzunluğuna bağımlılığı (mutlak fark; atr/ann_vol bağıl):")
+        print("  " + f"{'son N bar':>10}" + "".join(f"{c:>12}" for c in cols))
+        for n, row in rec.items():
+            print("  " + f"{n:>10}" + "".join(f"{row[c]:>12.2e}" for c in cols))
+    print("\nSONUÇ:", "geleceğe bakma bulunmadı" if ok else "GELECEĞE BAKMA TESPİT EDİLDİ")
+    return 0 if ok else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="okx_karar", description="OKX kurallı karar sistemi")
     parser.add_argument("--config", default=None, help="yapılandırma dosyası (varsayılan: proje içindeki config.toml)")
@@ -246,6 +278,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--periods", default="dev,validation", help="protocol.toml'daki dönem adları")
     p.add_argument("--allow-test", action="store_true", help="test dönemini aç (yalnızca son adımda)")
 
+    p = sub.add_parser("audit")
+    p.add_argument("--lengths", default="150,300,600,1200", help="özyineleme testinde kullanılacak son-N bar değerleri")
+
     p = sub.add_parser("status")
     p.add_argument("--executor", choices=("sim", "demo"), default="sim")
 
@@ -253,5 +288,5 @@ def main(argv: list[str] | None = None) -> int:
     base = Path(__file__).resolve().parent.parent
     cfg = load_config(args.config or base / "config.toml")
     handlers = {"fetch": cmd_fetch, "backtest": cmd_backtest, "paper": cmd_paper, "status": cmd_status,
-                "compare": cmd_compare, "evaluate": cmd_evaluate}
+                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit}
     return handlers[args.cmd](cfg, args, base)
