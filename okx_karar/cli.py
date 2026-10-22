@@ -5,6 +5,7 @@
   paper     her mum kapanışında karar verir (--executor sim | demo)
   status    paper hesabın durumunu gösterir
   evaluate  önceden kaydedilmiş protokolle yapılandırmaları dönem dönem değerlendirir
+  events    registry adayları için bağımsız olay sayımı (fiyat/getiri yok)
   collect   kendi veri toplayıcımız: funding, açık pozisyon, derinlik, uzun/kısa oranı → data/collector.db
   notify    sinyal durumu değişince Telegram/macOS/konsol bildirimi (emir vermez)
   dca       E6: düz DCA ve BTC 200g rejim eğimi (dönem dönem)
@@ -382,6 +383,34 @@ def cmd_collect(_cfg, args, base: Path) -> int:
     return 1 if len(result["errors"]) >= 6 else 0
 
 
+def cmd_events(_cfg, args, base: Path) -> int:
+    """R01 olay sayımı (yalnızca sayım; fiyat/getiri yok). Plan: experiments/registry/R01_count_plan.md"""
+    from okx_karar.binance_funding import interval_audit, load_funding
+    from okx_karar.events import count_variants, render_markdown
+
+    if args.candidate != "R01":
+        raise SystemExit("Şimdilik yalnızca R01 destekleniyor.")
+    protocol = tomllib.loads((base / "experiments" / "protocol.toml").read_text(encoding="utf-8"))
+    periods = {n: tuple(pd.Timestamp(x, tz="UTC") for x in protocol["periods"][n]) for n in ("dev", "validation")}
+    symbols = {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "SOL": "SOLUSDT"}
+    start, end = pd.Timestamp("2021-09-01", tz="UTC"), periods["validation"][1]
+    funding, coverage = {}, {}
+    for coin, symbol in symbols.items():
+        funding[coin] = load_funding(symbol, start, end, base / "data")
+        coverage[coin] = interval_audit(funding[coin])
+        a = coverage[coin]
+        print(f"{coin}: {a['rows']} settlement, {a['first']:%Y-%m-%d} → {a['last']:%Y-%m-%d}, düzensiz adım: {len(a['irregular'])}")
+    rows = count_variants(funding, periods)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    out_dir = base / "experiments" / "registry"
+    (out_dir / "R01_counts.md").write_text(render_markdown(rows, coverage, stamp), encoding="utf-8")
+    (out_dir / "R01_counts.json").write_text(json.dumps({"generated_at": stamp, "rows": rows}, indent=2, default=str), encoding="utf-8")
+    print(f"\n{'varyant':<28}{'dev':>5}{'val':>5}  karar")
+    for r in rows:
+        print(f"{r['variant']:<28}{r['n_dev']:>5}{r['n_validation']:>5}  {r['verdict']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="okx_karar", description="OKX kurallı karar sistemi")
     parser.add_argument("--config", default=None, help="yapılandırma dosyası (varsayılan: proje içindeki config.toml)")
@@ -427,6 +456,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--summary", action="store_true", help="birikmiş verinin özetini göster")
     p.add_argument("--ratio-period", default="1H", help="rubik istatistik periyodu (5m, 1H, 1D)")
 
+    p = sub.add_parser("events")
+    p.add_argument("--candidate", default="R01", help="registry adayı (şimdilik yalnızca R01)")
+
     p = sub.add_parser("status")
     p.add_argument("--executor", choices=("sim", "demo"), default="sim")
 
@@ -434,5 +466,5 @@ def main(argv: list[str] | None = None) -> int:
     base = Path(__file__).resolve().parent.parent
     cfg = load_config(args.config or base / "config.toml")
     handlers = {"fetch": cmd_fetch, "backtest": cmd_backtest, "paper": cmd_paper, "status": cmd_status,
-                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit, "dca": cmd_dca, "notify": cmd_notify, "collect": cmd_collect}
+                "compare": cmd_compare, "evaluate": cmd_evaluate, "audit": cmd_audit, "dca": cmd_dca, "notify": cmd_notify, "collect": cmd_collect, "events": cmd_events}
     return handlers[args.cmd](cfg, args, base)
