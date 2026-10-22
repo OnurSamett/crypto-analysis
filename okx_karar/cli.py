@@ -390,6 +390,8 @@ def cmd_events(_cfg, args, base: Path) -> int:
 
     if args.candidate != "R01":
         raise SystemExit("Şimdilik yalnızca R01 destekleniyor.")
+    if args.stage == "returns":
+        return _r01_returns(base)
     protocol = tomllib.loads((base / "experiments" / "protocol.toml").read_text(encoding="utf-8"))
     periods = {n: tuple(pd.Timestamp(x, tz="UTC") for x in protocol["periods"][n]) for n in ("dev", "validation")}
     symbols = {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "SOL": "SOLUSDT"}
@@ -408,6 +410,37 @@ def cmd_events(_cfg, args, base: Path) -> int:
     print(f"\n{'varyant':<28}{'dev':>5}{'val':>5}  karar")
     for r in rows:
         print(f"{r['variant']:<28}{r['n_dev']:>5}{r['n_validation']:>5}  {r['verdict']}")
+    return 0
+
+
+def _r01_returns(base: Path) -> int:
+    """R01 getiri aşaması. Plan: experiments/registry/R01_returns_plan.md. Yalnızca sayımı geçen varyantlar değerlendirilir."""
+    from okx_karar.binance_funding import load_funding
+    from okx_karar.events import count_variants
+    from okx_karar.returns import render_markdown as render_returns
+    from okx_karar.returns import run_r01
+
+    protocol = tomllib.loads((base / "experiments" / "protocol.toml").read_text(encoding="utf-8"))
+    periods = {n: tuple(pd.Timestamp(x, tz="UTC") for x in protocol["periods"][n]) for n in ("dev", "validation")}
+    start, end = pd.Timestamp("2021-09-01", tz="UTC"), periods["validation"][1]
+    funding = {coin: load_funding(sym, start, end, base / "data") for coin, sym in
+               {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "SOL": "SOLUSDT"}.items()}
+    opens = {coin: load_candles(None, f"{coin}-USDT", "4H", pd.Timestamp("2021-02-01", tz="UTC"), None, base / "data",
+                                offline=True)["open"] for coin in funding}
+    rows = count_variants(funding, periods)
+    results = run_r01(funding, opens, periods, rows)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    out_dir = base / "experiments" / "registry"
+    (out_dir / "R01_returns.md").write_text(render_returns(results, stamp), encoding="utf-8")
+    (out_dir / "R01_returns.json").write_text(json.dumps({"generated_at": stamp, "results": results}, indent=2, default=str),
+                                              encoding="utf-8")
+    print(f"{'varyant':<28}{'ort. dev':>10}{'ort. val':>10}{'p dev':>8}{'Holm p':>8}  katman")
+    for r in results:
+        if "mean_dev" not in r:
+            print(f"{r['variant']:<28}{'-':>10}{'-':>10}{'-':>8}{'-':>8}  {r['tier']}")
+        else:
+            print(f"{r['variant']:<28}{100 * r['mean_dev']:>9.2f}%{100 * r['mean_val']:>9.2f}%{r['p_dev']:>8.4f}"
+                  f"{r['p_dev_holm']:>8.4f}  {r['tier']}")
     return 0
 
 
@@ -458,6 +491,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("events")
     p.add_argument("--candidate", default="R01", help="registry adayı (şimdilik yalnızca R01)")
+    p.add_argument("--stage", choices=("counts", "returns"), default="counts", help="sayım ya da getiri aşaması")
 
     p = sub.add_parser("status")
     p.add_argument("--executor", choices=("sim", "demo"), default="sim")

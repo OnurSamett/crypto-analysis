@@ -89,6 +89,14 @@ def count_variants(funding: dict, periods: dict, z0s=Z0S, horizons=None, sides=S
     return rows
 
 
+def variant_events(funding: dict, period: tuple, z0: float, side: str, horizon: pd.Timedelta, window: int = WINDOW):
+    """Kept events per coin and the cross-coin clusters of ONE variant in ONE period (timestamps only)."""
+    start, end = period
+    kept = {coin: merge_same_coin(eligible(candidate_times(zscores(series, window), z0, side), start, end, horizon), horizon)
+            for coin, series in funding.items()}
+    return kept, cluster_across_coins(kept, horizon)
+
+
 def verdict(n_dev: int, n_val: int) -> str:
     return "COUNT_OK" if (n_dev >= DEV_MIN and n_val >= VAL_MIN) else "INSUFFICIENT"
 
