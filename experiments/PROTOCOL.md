@@ -94,3 +94,38 @@ fikirlerini gerçek veride uygular. Bir yapılandırmanın backtest sonuçları 
 ### Bilinen kusur (belgelenir, düzeltilmez)
 `risk.vol_window` alanı hiçbir yerde kullanılmıyor; yıllık volatilite `signals.volume_window` ile hesaplanıyor. E2–E4'te ikisi de 20 olduğu için
 sonuç etkilenmedi. E5'te `signals.volume_window = 120` (20 gün) kullanılır. Düzeltme ayrı bir değişiklik olarak yapılacak; geçmiş koşular değişmez.
+
+---
+
+## Ek 3 (2026-10-22) — Kanıt kapısı: yeni sinyal kaynakları için (sonuçlara bakılmadan YAZILDI)
+
+Bu ek; takvim/döngü desenleri (halving, gün-saat etkileri), Telegram VIP kanal sinyalleri ve kendi topladığımız verilerden çıkan göstergeler (funding, açık pozisyon, uzun/kısa oranı, defter derinliği) için geçerlidir. Bir kaynak aşağıdaki kapıdan geçmeden bildirimde **"sinyal"** diye gönderilemez.
+
+### Ön kayıt (taramadan önce)
+Her aday için `experiments/registry/<kimlik>.md` dosyası, test koşulmadan **önce** commit'lenir. İçeriği: hipotez, **neden çalışması gerektiği** (mekanizma), denenecek **tüm varyantların sayısı K ve listesi**, olay tanımı, tutma süresi (ufuk), ölçüt. Registry'de olmayan bir varyant "keşif" sayılır ve kapıya sokulmaz. Gerekçesiz toplu tarama yapılmaz.
+
+### Kapı ölçütleri (hepsi sağlanmalı)
+1. **Gerekçe:** registry'de yazılı bir mekanizma.
+2. **Yeterli bağımsız gözlem:** *bağımsız olay* = aynı enstrümanda ufuk süresinden daha yakın olmayan olaylar. En az **30** olay `dev`'de ve **15** olay `validation`'da. Yetersizse sonuç yalnızca not edilir (ör. halving döngüsü: 3–4 gözlem → otomatik yetersiz).
+3. **Maliyet sonrası:** gidiş-dönüş %0,30 (komisyon + kayma) düşüldükten sonra olay başına ortalama getiri > 0.
+4. **Çoklu test düzeltmesi:** p-değeri blok bootstrap/permütasyon testiyle hesaplanır; K varyant üzerinde **Holm–Bonferroni**, α = 0,05.
+5. **Örneklem dışı:** `validation`'da etki aynı yönde ve `dev` etkisinin en az **yarısı** kadar.
+6. **Sağlamlık:** BTC, ETH, SOL'un **üçünde de** aynı yön; ana parametre ×0,8 ve ×1,2 yapıldığında etki pozitif kalır.
+7. **Look-ahead denetimi:** `audit` (kesme testi) geçmeli; olay zamanından sonraki bilgi kullanılamaz.
+8. **İleriye dönük doğrulama:** ≥ **90 gün** ve ≥ **15 olay** paper izleme, parametre değişmeden. Değişirse sayaç sıfırlanır.
+
+### Kademeler
+| Kademe | Koşul | Bildirim |
+|---|---|---|
+| **Deneysel** | kapıya girmedi / 1–7 tamamlanmadı | gönderilmez (ayrı, açıkça "DENEYSEL" etiketli kanal tercih edilirse) |
+| **İzleme** | 1–7 geçti, 8 sürüyor | "izleme" etiketiyle |
+| **Doğrulanmış** | 1–8 geçti | "sinyal" olarak |
+
+### VIP kanal sinyalleri
+Kanalın sinyalleri tek bir strateji gibi sınanır: giriş, mesaj zamanından **sonraki** ilk fiyattan (kayma + komisyon); TP/SL hangisi önce vurduysa o. Karşılaştırma **rastgele giriş** temel çizgisiyle yapılır (aynı enstrümanlar ve saatler, aynı TP/SL kuralı, 1000 permütasyon). Silinen/düzenlenen mesajlar ve gecikmiş paylaşımlar ayrıca raporlanır. Ham mesajlar `private/` altında kalır, repoya girmez; yalnızca kanal adı olmadan toplu istatistik yayınlanır.
+
+### Kendi veri toplayıcımız
+`collect` ile birikecek veriler (funding, açık pozisyon, derinlik) **2026-10-22'den itibaren ileriye dönüktür**; dev/validation yoktur, olaylar biriktikçe 2. ve 8. ölçüt birlikte işler. Geriye dönük olan 30 günlük oran ve alıcı/satıcı hacmi tek başına 2. ölçütü karşılamaz.
+
+### Dönemler
+Mevcut `dev` / `validation` / test bölgesi tanımları aynen geçerlidir. Test bölgesindeki (2025+) her koşu `--allow-test` ister ve `test_log.jsonl`'a yazılır.
